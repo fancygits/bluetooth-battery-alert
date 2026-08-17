@@ -1,0 +1,27 @@
+README.md
+  s_1d05cb67e5cdf0::t_6968cb705bf75e 1,13,29,47,70,86,91,125-126,137
+test.sh
+  s_1d05cb67e5cdf0::t_6968cb705bf75e 79-81,89,94,105,113,128,136,144,153,161,182,184,217,225,231,235
+check_bluetooth_battery.sh
+  s_1d05cb67e5cdf0::t_6968cb705bf75e 1-74
+install.sh
+  s_1d05cb67e5cdf0::t_6968cb705bf75e 28-31,91,95,134-135,149
+uninstall.sh
+  s_1d05cb67e5cdf0::t_6968cb705bf75e 3,6,8-9,17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "84d7b4277883a7c5303bebccf6eeed58c7a0fc10",
+  "prompts": {},
+  "sessions": {
+    "s_1d05cb67e5cdf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11fe0e36-9fa7-4c87-a0f5-3e82db1cd7f9",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  }
+}
