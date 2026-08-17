@@ -1,0 +1,26 @@
+test.sh
+  s_1d05cb67e5cdf0::t_465bb94e45820d 75
+  s_1d05cb67e5cdf0::t_b7ea6b6954021c 1-74,76-250
+install.sh
+  s_1d05cb67e5cdf0::t_e4530c21c46061 79
+.github/workflows/ci.yml
+  s_1d05cb67e5cdf0::t_38c755d254d103 1-18
+README.md
+  s_1d05cb67e5cdf0::t_9570584a5b9ace 100-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "52896c7d61e342ff4d263d155c1bdffb23bb1255",
+  "prompts": {},
+  "sessions": {
+    "s_1d05cb67e5cdf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11fe0e36-9fa7-4c87-a0f5-3e82db1cd7f9",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  }
+}
