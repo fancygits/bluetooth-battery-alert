@@ -1,0 +1,60 @@
+notifier/make_icon.swift
+  s_1d05cb67e5cdf0::t_4c46ab1ce2bab7 1-33
+README.md
+  s_1d05cb67e5cdf0::t_40fd945da3f3bb 161-173
+  s_1d05cb67e5cdf0::t_447afca5fe813d 8-10,24-27,34-55,58-62
+  s_1d05cb67e5cdf0::t_2b34f2aab3bfc1 72-98,100,105
+  s_1d05cb67e5cdf0::t_0ece95eb81b555 202-204
+  s_1d05cb67e5cdf0::t_e553169adce4a3 118-121
+test.sh
+  s_1d05cb67e5cdf0::t_4eae8ab3827adc 252-253
+  s_1d05cb67e5cdf0::t_06877f35798048 87-88,92
+  s_1d05cb67e5cdf0::t_7da72470679380 191-195
+  s_1d05cb67e5cdf0::t_ffafdde7b3b5b1 254-258
+  s_1d05cb67e5cdf0::t_95a7595352cf4c 127
+  s_1d05cb67e5cdf0::t_9ff9a9afae65d4 2-6
+  s_1d05cb67e5cdf0::t_b39458190914a4 71-72
+  s_1d05cb67e5cdf0::t_ae354058c6299f 229
+  s_1d05cb67e5cdf0::t_bb7740892af8c8 103-104,113,134-135,142,152,159-160,170,198
+  s_1d05cb67e5cdf0::t_1d2e248652b4bb 37-41,46,48
+  s_1d05cb67e5cdf0::t_fb80042402f36f 121-126
+  s_1d05cb67e5cdf0::t_24364862e06d20 190
+check_bluetooth_battery.sh
+  s_1d05cb67e5cdf0::t_5d04f88c8801f1 29
+  s_1d05cb67e5cdf0::t_16a3146d59881f 72-80
+  s_1d05cb67e5cdf0::t_53bebd99135cb4 15-19
+Formula/bluetooth-battery-alert.rb
+  s_1d05cb67e5cdf0::t_8428d6342f158d 1-44,48,50-58
+  s_1d05cb67e5cdf0::t_9ad291a6633258 45-47,49
+uninstall.sh
+  s_1d05cb67e5cdf0::t_6a40d9cf8310fa 9,17
+.github/workflows/ci.yml
+  s_1d05cb67e5cdf0::t_ba9ad4e7b368dd 9-13
+install.sh
+  s_1d05cb67e5cdf0::t_c3ae087bfd7dfd 138
+  s_1d05cb67e5cdf0::t_8e6193a679297f 119
+  s_1d05cb67e5cdf0::t_8dfab58c8f9619 100,103-107
+  s_1d05cb67e5cdf0::t_823c372907e21c 34-39
+  s_1d05cb67e5cdf0::t_c6f7834c8bcbce 108-118,120-137,139-151
+  s_1d05cb67e5cdf0::t_ed1b8f542c6e82 210-214
+  s_1d05cb67e5cdf0::t_809a1da861abde 26-28
+  s_1d05cb67e5cdf0::t_38b35875d008cc 25,40
+notifier/main.swift
+  s_1d05cb67e5cdf0::t_66805ebd955414 1-67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "2b1882106b901677af040c25567534408e0b4e68",
+  "prompts": {},
+  "sessions": {
+    "s_1d05cb67e5cdf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11fe0e36-9fa7-4c87-a0f5-3e82db1cd7f9",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  }
+}
