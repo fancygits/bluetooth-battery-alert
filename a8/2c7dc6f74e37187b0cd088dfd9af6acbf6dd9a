@@ -1,0 +1,19 @@
+README.md
+  s_1d05cb67e5cdf0::t_e88ee4c7b811ce 76-77,80-98,101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "a82c7dc6f74e37187b0cd088dfd9af6acbf6dd9a",
+  "prompts": {},
+  "sessions": {
+    "s_1d05cb67e5cdf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11fe0e36-9fa7-4c87-a0f5-3e82db1cd7f9",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  }
+}
