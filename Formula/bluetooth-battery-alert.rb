@@ -1,8 +1,10 @@
 class BluetoothBatteryAlert < Formula
   desc "Native macOS alert when a Bluetooth mouse/keyboard battery runs low"
   homepage "https://github.com/fancygits/bluetooth-battery-alert"
-  url "https://github.com/fancygits/bluetooth-battery-alert.git", branch: "main"
-  version "1.0"
+  url "https://github.com/fancygits/bluetooth-battery-alert.git",
+      tag:      "v1.0.0",
+      revision: "2b1882106b901677af040c25567534408e0b4e68"
+  version "1.0.0"
   license "MIT"
 
   depends_on :macos
