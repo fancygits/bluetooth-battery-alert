@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh — register the Bluetooth battery check as a launchd agent.
+# install.sh - register the Bluetooth battery check as a launchd agent.
 # Safe to re-run (reinstalls cleanly if already installed).
 set -euo pipefail
 

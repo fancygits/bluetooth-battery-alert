@@ -1,5 +1,5 @@
 #!/bin/bash
-# uninstall.sh — unregister and remove the launchd agent.
+# uninstall.sh - unregister and remove the launchd agent.
 set -euo pipefail
 
 LABEL="com.btbatteryalert.check"

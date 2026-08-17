@@ -1,8 +1,8 @@
 # bt-battery-alert
 
 Native macOS notification when a Bluetooth mouse or keyboard battery runs
-low, checked on a schedule (default: weekdays Monday–Thursday at 5pm, so
-you know to charge it before leaving work — and skip Friday since it won't
+low, checked on a schedule (default: weekdays Monday-Thursday at 5pm, so
+you know to charge it before leaving work - and skip Friday since it won't
 sit plugged in over the weekend).
 
 Runs entirely locally via `launchd`. No app, no background daemon, no
@@ -24,14 +24,14 @@ skipped automatically. Any device below `THRESHOLD` (default 20%) triggers
 a native notification via `osascript`.
 
 `install.sh` registers this script as a `launchd` LaunchAgent using
-`com.btbatteryalert.plist.template`, which schedules it for Mon–Thu at
+`com.btbatteryalert.plist.template`, which schedules it for Mon-Thu at
 5:00pm via `StartCalendarInterval`.
 
 ## Requirements
 
 - macOS (uses `ioreg` and `osascript`, both built in)
 - Verified against real hardware output on macOS as of August 2026. `ioreg`
-  is not a documented, version-guaranteed API — if Apple changes the
+  is not a documented, version-guaranteed API - if Apple changes the
   `AppleDeviceManagementHIDEventService` internals in a future macOS
   release, this may need adjusting. Re-run the check below to confirm it
   still works after a major macOS upgrade.
@@ -44,7 +44,7 @@ cd bt-battery-alert
 ./install.sh
 ```
 
-This is safe to re-run any time (e.g. after moving the repo folder) — it
+This is safe to re-run any time (e.g. after moving the repo folder) - it
 reinstalls cleanly.
 
 ## Test it immediately
@@ -60,7 +60,7 @@ notification, temporarily set `THRESHOLD=100` at the top of
 ## Customize
 
 - **Battery threshold**: edit `THRESHOLD` in `check_bt_battery.sh`, then
-  re-run `./install.sh` (or just save — the script is read fresh each run,
+  re-run `./install.sh` (or just save - the script is read fresh each run,
   no reinstall needed for this change alone).
 - **Schedule / days**: edit the `StartCalendarInterval` array in
   `com.btbatteryalert.plist.template` (`Weekday`: 0=Sun … 6=Sat), then
