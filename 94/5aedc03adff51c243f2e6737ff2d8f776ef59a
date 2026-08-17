@@ -1,0 +1,19 @@
+Formula/bluetooth-battery-alert.rb
+  s_1d05cb67e5cdf0::t_0407f66e92ccf4 4-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "945aedc03adff51c243f2e6737ff2d8f776ef59a",
+  "prompts": {},
+  "sessions": {
+    "s_1d05cb67e5cdf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11fe0e36-9fa7-4c87-a0f5-3e82db1cd7f9",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  }
+}
