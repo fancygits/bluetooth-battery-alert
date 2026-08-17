@@ -1,0 +1,32 @@
+uninstall.sh
+  s_1d05cb67e5cdf0::t_aaa1a63d838da9 2-3,8-12,16-17,20-25
+check_bt_battery.sh
+  s_1d05cb67e5cdf0::t_eadb5d007f6e29 11-12,14,19-40,42-45,48-52,54,57-64,66-73
+  h_c85ef4eac37ecb 13
+install.sh
+  s_1d05cb67e5cdf0::t_caa33db676c48c 2-3,6-26,29-33,35-77,79-85,87-135,140-160
+README.md
+  s_1d05cb67e5cdf0::t_3f35ded6894f38 4-6,23-26,28-31,35,39-41,51-81,86,90-91,96-97,107-111,119,121-123
+  s_1d05cb67e5cdf0::t_0e9edbc689f0d9 100-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "2fbaf24c02fe43ca366959c36520a08ef9039628",
+  "prompts": {},
+  "humans": {
+    "h_c85ef4eac37ecb": {
+      "author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  },
+  "sessions": {
+    "s_1d05cb67e5cdf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11fe0e36-9fa7-4c87-a0f5-3e82db1cd7f9",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  }
+}
