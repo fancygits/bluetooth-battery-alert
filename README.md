@@ -73,25 +73,32 @@ ad-hoc signature (no paid Apple Developer account or notarization needed).
 
 ```bash
 brew tap fancygits/bluetooth-battery-alert https://github.com/fancygits/bluetooth-battery-alert
-brew install bluetooth-battery-alert
-bluetooth-battery-alert install
+brew trust --formula fancygits/bluetooth-battery-alert/bluetooth-battery-alert
+brew install bluetooth-battery-alert && bluetooth-battery-alert install
 ```
 
-`brew install` only stages the `bluetooth-battery-alert` command; it
-doesn't touch launchd or fire the permission prompt on its own (installing
-a background scheduled job and popping a system dialog isn't something a
-package install should do silently). Run `bluetooth-battery-alert install`
-right after to actually build the notifier and register the schedule -
-see Customize below for the same `--threshold`/`--hour`/`--minute`/`--days`
-flags. To update later: `brew upgrade bluetooth-battery-alert` (pulls the
-latest `main`), then re-run `bluetooth-battery-alert install` to rebuild.
+The `brew trust` step is required by Homebrew itself for any non-official
+tap - without it, `brew install` refuses with "Refusing to load formula
+... from untrusted tap". It's a one-time step per machine.
 
-To remove it, run these in order - `brew uninstall` alone only removes the
-command itself, not the LaunchAgent it registered:
+`brew install` only stages the `bluetooth-battery-alert` command - it
+can't touch launchd or fire the permission prompt on its own, because
+Homebrew's `post_install` hook runs in a sandbox that blocks writes
+outside the Cellar and formula logs (no access to `~/Applications`,
+`~/Library/LaunchAgents`, etc.), so there's no way to fold that into the
+same step. `bluetooth-battery-alert install` right after actually builds
+the notifier and registers the schedule - see Customize below for the
+same `--threshold`/`--hour`/`--minute`/`--days` flags. To update later:
+`brew upgrade bluetooth-battery-alert` (installs whatever the newest
+tagged formula version points to), then re-run
+`bluetooth-battery-alert install` to rebuild.
+
+To remove it, run both of these - `brew uninstall` alone only removes the
+command itself, not the LaunchAgent it registered (Homebrew formulas have
+no uninstall-time hook to automate this):
 
 ```bash
-bluetooth-battery-alert uninstall
-brew uninstall bluetooth-battery-alert
+bluetooth-battery-alert uninstall && brew uninstall bluetooth-battery-alert
 ```
 
 ### From source
