@@ -1,8 +1,9 @@
 #!/bin/bash
-# test.sh - offline test suite. Stubs ioreg/osascript/launchctl on PATH and
-# runs the scripts against fixture data in a throwaway HOME, so it needs no
-# Bluetooth hardware, sends no real notifications, and never touches your
-# actual launchd agents or settings. Safe to run anywhere, including CI.
+# test.sh - offline test suite. Stubs ioreg/launchctl on PATH and redirects
+# notifications to a logging stub, then runs the scripts against fixture
+# data in a throwaway HOME, so it needs no Bluetooth hardware, sends no
+# real notifications, and never touches your actual launchd agents or
+# settings. Safe to run anywhere, including CI.
 #
 # Usage: ./test.sh    (exits nonzero if any check fails)
 set -uo pipefail
@@ -33,15 +34,18 @@ file_absent() { [ ! -e "$1" ]; }
 quiet() { "$@" >/dev/null 2>&1; }
 
 # ---- stubs -----------------------------------------------------------------
-# ioreg replays a fixture; osascript records each argument on its own line;
-# launchctl records each invocation. All read/write paths via env vars.
+# ioreg replays a fixture; launchctl records each invocation. The real
+# notifier app is still built for real by install.sh (exercising the actual
+# swiftc/icon/codesign pipeline) - only the "fire a notification" call is
+# redirected to this stub via BTBA_NOTIFIER_BIN, so tests never pop a live
+# system permission dialog. All read/write paths via env vars.
 cat > "$STUBS/ioreg" <<'EOF'
 #!/bin/bash
 cat "$BTBA_FIXTURE"
 EOF
-cat > "$STUBS/osascript" <<'EOF'
+cat > "$STUBS/notifier_stub" <<'EOF'
 #!/bin/bash
-printf '%s\n' "$@" >> "$OSA_LOG"
+printf '%s\n' "$@" >> "$NOTIFIER_LOG"
 EOF
 cat > "$STUBS/launchctl" <<'EOF'
 #!/bin/bash
@@ -64,7 +68,8 @@ cat > "$FIXTURES/healthy.txt" <<'EOF'
     "Product" = "Magic Keyboard"
     "BatteryPercent" = 64
 EOF
-# A device name that attempts AppleScript injection via the notification.
+# A device name that would attempt shell injection if it were ever
+# interpolated into script source rather than passed as a plain argument.
 cat > "$FIXTURES/malicious.txt" <<EOF
     "Product" = "x" & (do shell script "touch $TMPROOT/pwned") & "
     "BatteryPercent" = 8
@@ -79,11 +84,12 @@ setup() {
   mkdir -p "$XDG_CONFIG_HOME/bluetooth-battery-alert"
   CONFIG="$XDG_CONFIG_HOME/bluetooth-battery-alert/config"
   PLIST="$HOME/Library/LaunchAgents/com.bluetooth-battery-alert.check.plist"
-  export OSA_LOG="$TMPROOT/osascript.log"
+  export NOTIFIER_LOG="$TMPROOT/notifier.log"
+  export BTBA_NOTIFIER_BIN="$STUBS/notifier_stub"
   export LC_LOG="$TMPROOT/launchctl.log"
   export BTBA_FIXTURE="$FIXTURES/healthy.txt"
   ERR="$TMPROOT/stderr"
-  rm -f "$OSA_LOG" "$LC_LOG" "$ERR" "$TMPROOT/pwned"
+  rm -f "$NOTIFIER_LOG" "$LC_LOG" "$ERR" "$TMPROOT/pwned"
 }
 
 # ---- check_bluetooth_battery.sh ----------------------------------------------------
@@ -94,8 +100,8 @@ test_notifies_and_joins_multiple_devices() {
   bash "$REPO/check_bluetooth_battery.sh" 2>"$ERR" || rc=$?
   assert "exits 0" [ "$rc" -eq 0 ]
   assert "low devices joined with commas" \
-    grep -qFx 'Charge: MX Master 3: 5%, Old Trackpad: 3%' "$OSA_LOG"
-  assert "healthy device not included" not_grep 'Magic Keyboard' "$OSA_LOG"
+    grep -qFx 'Charge: MX Master 3: 5%, Old Trackpad: 3%' "$NOTIFIER_LOG"
+  assert "healthy device not included" not_grep 'Magic Keyboard' "$NOTIFIER_LOG"
   assert "no warnings" [ ! -s "$ERR" ]
 }
 
@@ -104,7 +110,7 @@ test_no_notification_when_all_healthy() {
   local rc=0
   bash "$REPO/check_bluetooth_battery.sh" 2>"$ERR" || rc=$?
   assert "exits 0" [ "$rc" -eq 0 ]
-  assert "no notification sent" file_absent "$OSA_LOG"
+  assert "no notification sent" file_absent "$NOTIFIER_LOG"
   assert "no warnings" [ ! -s "$ERR" ]
 }
 
@@ -112,29 +118,28 @@ test_malicious_device_name_stays_inert() {
   export BTBA_FIXTURE="$FIXTURES/malicious.txt"
   bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
   assert "injection did not execute in our shell" file_absent "$TMPROOT/pwned"
-  # The AppleScript source lines must stay fixed; the name may only appear
-  # in the message argument (the line starting "Charge: ").
-  local leaked
-  leaked=$(grep -F 'do shell script' "$OSA_LOG" | grep -cv '^Charge: ') || true
-  assert "malicious text only appears as message data" [ "$leaked" -eq 0 ]
-  assert "script source has no interpolation" grep -qFx \
-    'display notification (item 1 of argv) with title "Bluetooth Battery Low" sound name (item 2 of argv)' \
-    "$OSA_LOG"
+  # No script or shell parsing is involved at all - the notifier receives
+  # plain argv (title, body, sound), so the device name can only ever land
+  # as inert text in the body line, never split into separate tokens.
+  assert "exactly 3 argv reached the notifier (title, body, sound)" \
+    [ "$(wc -l < "$NOTIFIER_LOG" | tr -d ' ')" -eq 3 ]
+  assert "malicious device name passed through as plain text, unexecuted" \
+    grep -qF 'do shell script touch' "$NOTIFIER_LOG"
 }
 
 test_ignore_list_skips_device() {
   printf 'IGNORE=Old Trackpad\n' > "$CONFIG"
   export BTBA_FIXTURE="$FIXTURES/low.txt"
   bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
-  assert "ignored device excluded" not_grep 'Old Trackpad' "$OSA_LOG"
-  assert "other low device still alerts" grep -q 'MX Master 3: 5%' "$OSA_LOG"
+  assert "ignored device excluded" not_grep 'Old Trackpad' "$NOTIFIER_LOG"
+  assert "other low device still alerts" grep -q 'MX Master 3: 5%' "$NOTIFIER_LOG"
 }
 
 test_custom_sound_from_config() {
   printf 'SOUND=Ping\n' > "$CONFIG"
   export BTBA_FIXTURE="$FIXTURES/low.txt"
   bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
-  assert "custom sound passed as argument" grep -qFx 'Ping' "$OSA_LOG"
+  assert "custom sound passed as argument" grep -qFx 'Ping' "$NOTIFIER_LOG"
 }
 
 test_invalid_threshold_falls_back_to_default() {
@@ -144,15 +149,15 @@ test_invalid_threshold_falls_back_to_default() {
   bash "$REPO/check_bluetooth_battery.sh" 2>"$ERR" || rc=$?
   assert "exits 0" [ "$rc" -eq 0 ]
   assert "warns about the bad value" grep -q "invalid THRESHOLD 'banana'" "$ERR"
-  assert "still alerts using default 20" grep -q 'MX Master 3: 5%' "$OSA_LOG"
+  assert "still alerts using default 20" grep -q 'MX Master 3: 5%' "$NOTIFIER_LOG"
 }
 
 test_threshold_from_config_respected() {
   printf 'THRESHOLD=4\n' > "$CONFIG"
   export BTBA_FIXTURE="$FIXTURES/low.txt"
   bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
-  assert "3% device alerts at threshold 4" grep -q 'Old Trackpad: 3%' "$OSA_LOG"
-  assert "5% device does not alert at threshold 4" not_grep 'MX Master 3' "$OSA_LOG"
+  assert "3% device alerts at threshold 4" grep -q 'Old Trackpad: 3%' "$NOTIFIER_LOG"
+  assert "5% device does not alert at threshold 4" not_grep 'MX Master 3' "$NOTIFIER_LOG"
 }
 
 test_warns_when_no_devices_seen() {
@@ -162,7 +167,7 @@ test_warns_when_no_devices_seen() {
   assert "exits 0" [ "$rc" -eq 0 ]
   assert "warns about possible format drift" \
     grep -q 'no battery-reporting devices found' "$ERR"
-  assert "no notification sent" file_absent "$OSA_LOG"
+  assert "no notification sent" file_absent "$NOTIFIER_LOG"
 }
 
 # ---- install.sh -------------------------------------------------------------
@@ -182,9 +187,15 @@ test_install_generates_valid_plist() {
   assert "logs under ~/Library/Logs" grep -q 'Library/Logs/bluetooth-battery-alert' "$TMPROOT/plist.txt"
   assert "script installed and executable" \
     [ -x "$HOME/Library/Application Support/bluetooth-battery-alert/check_bluetooth_battery.sh" ]
+  local notifier_app="$HOME/Applications/BluetoothBatteryAlert.app"
+  assert "notifier binary built and executable" \
+    [ -x "$notifier_app/Contents/MacOS/BluetoothBatteryAlert" ]
+  assert "notifier icon generated" [ -f "$notifier_app/Contents/Resources/AppIcon.icns" ]
+  assert "notifier bundle signed" quiet codesign -v "$notifier_app"
+  assert "notifier Info.plist lints" quiet plutil -lint "$notifier_app/Contents/Info.plist"
   assert "threshold written to config" grep -qx 'THRESHOLD=15' "$CONFIG"
   assert "agent bootstrapped" grep -q 'bootstrap gui/' "$LC_LOG"
-  assert "test notification fired" grep -q 'notifications are working' "$OSA_LOG"
+  assert "test notification fired" grep -q 'notifications are working' "$NOTIFIER_LOG"
 }
 
 test_install_rejects_bad_flags() {
@@ -215,6 +226,7 @@ test_uninstall_keeps_config_by_default() {
   assert "plist removed" file_absent "$PLIST"
   assert "installed script removed" \
     file_absent "$HOME/Library/Application Support/bluetooth-battery-alert"
+  assert "notifier app removed" file_absent "$HOME/Applications/BluetoothBatteryAlert.app"
   assert "agent booted out" grep -q 'bootout gui/' "$LC_LOG"
   assert "config kept" [ -f "$CONFIG" ]
 }
@@ -236,6 +248,13 @@ if command -v shellcheck >/dev/null 2>&1; then
     "$REPO/uninstall.sh" "$REPO/test.sh"
 else
   echo "shellcheck not installed - skipping (brew install shellcheck)"
+fi
+assert "swiftc typecheck: main.swift" quiet swiftc -typecheck "$REPO/notifier/main.swift"
+assert "swiftc typecheck: make_icon.swift" quiet swiftc -typecheck "$REPO/notifier/make_icon.swift"
+if command -v brew >/dev/null 2>&1; then
+  assert "brew style: Formula" quiet brew style "$REPO/Formula/bluetooth-battery-alert.rb"
+else
+  echo "brew not installed - skipping Formula lint"
 fi
 
 echo "== tests =="

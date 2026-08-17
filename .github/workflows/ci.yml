@@ -6,9 +6,11 @@ on:
 
 jobs:
   test:
-    # macOS required: install.sh refuses other OSes and the tests exercise
-    # plutil/PlistBuddy. Everything else (ioreg, osascript, launchctl) is
-    # stubbed by test.sh, so no Bluetooth hardware or GUI session is needed.
+    # macOS required: install.sh refuses other OSes, the tests exercise
+    # plutil/PlistBuddy/swiftc/codesign, and brew style lints the Formula.
+    # ioreg and launchctl are stubbed, and the notification call is
+    # redirected to a logging stub, so no Bluetooth hardware or GUI
+    # session is needed.
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4

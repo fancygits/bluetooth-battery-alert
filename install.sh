@@ -22,12 +22,22 @@ EOF
 die() { echo "install.sh: $*" >&2; exit 1; }
 is_int() { [[ "$1" =~ ^[0-9]+$ ]]; }
 
-[ "$(uname)" = "Darwin" ] || die "this tool is macOS-only (needs ioreg, osascript, launchd)"
+[ "$(uname)" = "Darwin" ] || die "this tool is macOS-only (needs ioreg, launchd, Swift)"
+if ! command -v swiftc >/dev/null 2>&1 || ! command -v swift >/dev/null 2>&1; then
+  die "Xcode Command Line Tools required to build the notifier - run: xcode-select --install, then re-run ./install.sh"
+fi
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LABEL="com.bluetooth-battery-alert.check"
 APP_DIR="$HOME/Library/Application Support/bluetooth-battery-alert"
 SCRIPT_DEST="$APP_DIR/check_bluetooth_battery.sh"
+# The notifier must live in a Launch-Services-recognized Applications
+# folder, not buried under Library/Application Support - macOS silently
+# refuses to even show the notification-permission prompt for app bundles
+# in untrusted-looking locations (denies instantly, same as running from
+# /tmp), rather than prompting the user as it does for ~/Applications.
+NOTIFIER_APP="$HOME/Applications/BluetoothBatteryAlert.app"
+NOTIFIER_BIN="${BTBA_NOTIFIER_BIN:-$NOTIFIER_APP/Contents/MacOS/BluetoothBatteryAlert}"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/bluetooth-battery-alert"
 CONFIG_FILE="$CONFIG_DIR/config"
 LOG_DIR="$HOME/Library/Logs"
@@ -87,8 +97,57 @@ done
 
 # Install the script to a stable, user-owned location so the agent never
 # executes files out of the (movable, possibly shared) repo clone.
-mkdir -p "$APP_DIR" "$CONFIG_DIR" "$LOG_DIR" "$HOME/Library/LaunchAgents"
+mkdir -p "$APP_DIR" "$CONFIG_DIR" "$LOG_DIR" "$HOME/Library/LaunchAgents" "$HOME/Applications"
 install -m 755 "$REPO_DIR/check_bluetooth_battery.sh" "$SCRIPT_DEST"
+
+# Clean up the notifier app from where earlier versions of this installer
+# placed it (Application Support isn't a trusted location for notification
+# permissions - see the NOTIFIER_APP comment above).
+rm -rf "$APP_DIR/BluetoothBatteryAlert.app"
+
+# Build the notifier: a tiny app compiled from source on this machine (see
+# notifier/main.swift), so notifications carry this project's own name and
+# icon instead of Script Editor's, and clicking one does nothing instead
+# of opening Script Editor. Building locally - rather than shipping a
+# prebuilt binary - means nothing here was downloaded pre-compiled, so
+# there's no Gatekeeper "unidentified developer" prompt to work around.
+echo "Building notifier..."
+BUILD_DIR=$(mktemp -d)
+trap 'rm -rf "$BUILD_DIR"' EXIT
+
+swiftc -O -o "$BUILD_DIR/BluetoothBatteryAlert" "$REPO_DIR/notifier/main.swift"
+swift "$REPO_DIR/notifier/make_icon.swift" "🪫" "$BUILD_DIR/icon.png"
+
+ICONSET="$BUILD_DIR/AppIcon.iconset"
+mkdir -p "$ICONSET"
+for spec in "16 16x16" "32 16x16@2x" "32 32x32" "64 32x32@2x" \
+            "128 128x128" "256 128x128@2x" "256 256x256" \
+            "512 256x256@2x" "512 512x512" "1024 512x512@2x"; do
+  px=${spec%% *}
+  name=${spec#* }
+  sips -z "$px" "$px" "$BUILD_DIR/icon.png" --out "$ICONSET/icon_$name.png" >/dev/null
+done
+iconutil -c icns "$ICONSET" -o "$BUILD_DIR/AppIcon.icns"
+
+rm -rf "$NOTIFIER_APP"
+mkdir -p "$NOTIFIER_APP/Contents/MacOS" "$NOTIFIER_APP/Contents/Resources"
+install -m 755 "$BUILD_DIR/BluetoothBatteryAlert" "$NOTIFIER_APP/Contents/MacOS/BluetoothBatteryAlert"
+install -m 644 "$BUILD_DIR/AppIcon.icns" "$NOTIFIER_APP/Contents/Resources/AppIcon.icns"
+
+NOTIFIER_PLIST="$NOTIFIER_APP/Contents/Info.plist"
+"$PB" -c "Add :CFBundleIdentifier string com.bluetooth-battery-alert.BluetoothBatteryAlert" "$NOTIFIER_PLIST" >/dev/null
+"$PB" -c "Add :CFBundleExecutable string BluetoothBatteryAlert" "$NOTIFIER_PLIST"
+"$PB" -c "Add :CFBundleName string Bluetooth Battery Alert" "$NOTIFIER_PLIST"
+"$PB" -c "Add :CFBundlePackageType string APPL" "$NOTIFIER_PLIST"
+"$PB" -c "Add :CFBundleIconFile string AppIcon" "$NOTIFIER_PLIST"
+"$PB" -c "Add :CFBundleShortVersionString string 1.0" "$NOTIFIER_PLIST"
+"$PB" -c "Add :LSUIElement bool true" "$NOTIFIER_PLIST"
+plutil -lint "$NOTIFIER_PLIST" >/dev/null
+
+# Ad-hoc signature: required for the binary to run at all on Apple Silicon.
+# No paid developer certificate or notarization involved or needed.
+codesign --force --sign - "$NOTIFIER_APP"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$NOTIFIER_APP" >/dev/null 2>&1 || true
 
 if [ ! -f "$CONFIG_FILE" ]; then
   cat > "$CONFIG_FILE" <<'EOF'
@@ -148,14 +207,10 @@ echo "  Settings:  $CONFIG_FILE (edits apply on the next run, no reinstall)"
 echo "  Script:    $SCRIPT_DEST"
 echo "  Logs:      $LOG_DIR/bluetooth-battery-alert.log and .err"
 echo
-echo "Sending a test notification now. If macOS asks to allow notifications"
-echo "(from Script Editor or osascript), click Allow - otherwise scheduled"
-echo "alerts will be silently suppressed."
-osascript \
-  -e 'on run argv' \
-  -e 'display notification (item 1 of argv) with title "Bluetooth Battery Low" sound name "Glass"' \
-  -e 'end run' \
-  -- "Install test - notifications are working." \
-  || echo "warning: test notification failed; check System Settings > Notifications" >&2
+echo "Sending a test notification now. The FIRST time this runs, macOS will"
+echo "ask you to allow notifications for \"Bluetooth Battery Alert\" - click"
+echo "Allow, or scheduled alerts will be silently suppressed."
+"$NOTIFIER_BIN" "Bluetooth Battery Alert" "Install test - notifications are working." "Glass" \
+  || echo "warning: test notification failed; check System Settings > Notifications > Bluetooth Battery Alert" >&2
 echo
 echo "Run a real check any time with: bash \"$SCRIPT_DEST\""

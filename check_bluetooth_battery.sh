@@ -12,6 +12,11 @@
 # the defaults below apply when the file or a key is missing. The config
 # is parsed, so a config line can never execute code.
 #
+# Notifications go through the small BluetoothBatteryAlert.app that
+# install.sh builds and signs locally (see notifier/main.swift), so alerts
+# carry this project's own name/icon instead of Script Editor's, and
+# clicking one does nothing instead of opening Script Editor.
+#
 # Run manually to test, or install via install.sh to run on a schedule.
 
 set -euo pipefail
@@ -21,6 +26,7 @@ SOUND=Glass    # notification sound name
 IGNORE=""      # comma-separated device names to skip
 
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/bluetooth-battery-alert/config"
+NOTIFIER_BIN="${BTBA_NOTIFIER_BIN:-$HOME/Applications/BluetoothBatteryAlert.app/Contents/MacOS/BluetoothBatteryAlert}"
 
 warn() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >&2; }
 
@@ -63,12 +69,13 @@ if [ "$SEEN" -eq 0 ]; then
 fi
 
 if [ -n "$LOW" ]; then
-  # Device names and the sound name are passed as arguments, never
-  # interpolated into the AppleScript source - a device named
-  # `x" & (do shell script ...)` stays inert text.
-  osascript \
-    -e 'on run argv' \
-    -e 'display notification (item 1 of argv) with title "Bluetooth Battery Low" sound name (item 2 of argv)' \
-    -e 'end run' \
-    -- "Charge: $LOW" "$SOUND"
+  # Device names and the sound name are passed as plain argv strings to our
+  # own compiled notifier, never parsed as script or shell source - a
+  # device named `x" & (do shell script ...)` stays inert text.
+  if [ -x "$NOTIFIER_BIN" ]; then
+    "$NOTIFIER_BIN" "Bluetooth Battery Low" "Charge: $LOW" "$SOUND" \
+      || warn "notifier failed to deliver a notification - check System Settings > Notifications > Bluetooth Battery Alert"
+  else
+    warn "notifier app not found at $NOTIFIER_BIN - run ./install.sh to (re)install it"
+  fi
 fi

@@ -6,6 +6,7 @@ set -euo pipefail
 LABEL="com.bluetooth-battery-alert.check"
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 APP_DIR="$HOME/Library/Application Support/bluetooth-battery-alert"
+NOTIFIER_APP="$HOME/Applications/BluetoothBatteryAlert.app"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/bluetooth-battery-alert"
 
 PURGE=0
@@ -13,7 +14,7 @@ PURGE=0
 
 launchctl bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || true
 rm -f "$PLIST"
-rm -rf "$APP_DIR"
+rm -rf "$APP_DIR" "$NOTIFIER_APP"
 rm -f "$HOME/Library/Logs/bluetooth-battery-alert.log" "$HOME/Library/Logs/bluetooth-battery-alert.err"
 
 echo "Uninstalled."
