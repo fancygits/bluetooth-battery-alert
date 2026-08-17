@@ -76,9 +76,9 @@ setup() {
   mkdir -p "$TMPROOT/home"
   export HOME="$TMPROOT/home"
   export XDG_CONFIG_HOME="$HOME/.config"
-  mkdir -p "$XDG_CONFIG_HOME/btbatteryalert"
-  CONFIG="$XDG_CONFIG_HOME/btbatteryalert/config"
-  PLIST="$HOME/Library/LaunchAgents/com.btbatteryalert.check.plist"
+  mkdir -p "$XDG_CONFIG_HOME/bluetooth-battery-alert"
+  CONFIG="$XDG_CONFIG_HOME/bluetooth-battery-alert/config"
+  PLIST="$HOME/Library/LaunchAgents/com.bluetooth-battery-alert.check.plist"
   export OSA_LOG="$TMPROOT/osascript.log"
   export LC_LOG="$TMPROOT/launchctl.log"
   export BTBA_FIXTURE="$FIXTURES/healthy.txt"
@@ -86,12 +86,12 @@ setup() {
   rm -f "$OSA_LOG" "$LC_LOG" "$ERR" "$TMPROOT/pwned"
 }
 
-# ---- check_bt_battery.sh ----------------------------------------------------
+# ---- check_bluetooth_battery.sh ----------------------------------------------------
 
 test_notifies_and_joins_multiple_devices() {
   export BTBA_FIXTURE="$FIXTURES/low.txt"
   local rc=0
-  bash "$REPO/check_bt_battery.sh" 2>"$ERR" || rc=$?
+  bash "$REPO/check_bluetooth_battery.sh" 2>"$ERR" || rc=$?
   assert "exits 0" [ "$rc" -eq 0 ]
   assert "low devices joined with commas" \
     grep -qFx 'Charge: MX Master 3: 5%, Old Trackpad: 3%' "$OSA_LOG"
@@ -102,7 +102,7 @@ test_notifies_and_joins_multiple_devices() {
 test_no_notification_when_all_healthy() {
   export BTBA_FIXTURE="$FIXTURES/healthy.txt"
   local rc=0
-  bash "$REPO/check_bt_battery.sh" 2>"$ERR" || rc=$?
+  bash "$REPO/check_bluetooth_battery.sh" 2>"$ERR" || rc=$?
   assert "exits 0" [ "$rc" -eq 0 ]
   assert "no notification sent" file_absent "$OSA_LOG"
   assert "no warnings" [ ! -s "$ERR" ]
@@ -110,7 +110,7 @@ test_no_notification_when_all_healthy() {
 
 test_malicious_device_name_stays_inert() {
   export BTBA_FIXTURE="$FIXTURES/malicious.txt"
-  bash "$REPO/check_bt_battery.sh" 2>/dev/null
+  bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
   assert "injection did not execute in our shell" file_absent "$TMPROOT/pwned"
   # The AppleScript source lines must stay fixed; the name may only appear
   # in the message argument (the line starting "Charge: ").
@@ -125,7 +125,7 @@ test_malicious_device_name_stays_inert() {
 test_ignore_list_skips_device() {
   printf 'IGNORE=Old Trackpad\n' > "$CONFIG"
   export BTBA_FIXTURE="$FIXTURES/low.txt"
-  bash "$REPO/check_bt_battery.sh" 2>/dev/null
+  bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
   assert "ignored device excluded" not_grep 'Old Trackpad' "$OSA_LOG"
   assert "other low device still alerts" grep -q 'MX Master 3: 5%' "$OSA_LOG"
 }
@@ -133,7 +133,7 @@ test_ignore_list_skips_device() {
 test_custom_sound_from_config() {
   printf 'SOUND=Ping\n' > "$CONFIG"
   export BTBA_FIXTURE="$FIXTURES/low.txt"
-  bash "$REPO/check_bt_battery.sh" 2>/dev/null
+  bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
   assert "custom sound passed as argument" grep -qFx 'Ping' "$OSA_LOG"
 }
 
@@ -141,7 +141,7 @@ test_invalid_threshold_falls_back_to_default() {
   printf 'THRESHOLD=banana\n' > "$CONFIG"
   export BTBA_FIXTURE="$FIXTURES/low.txt"
   local rc=0
-  bash "$REPO/check_bt_battery.sh" 2>"$ERR" || rc=$?
+  bash "$REPO/check_bluetooth_battery.sh" 2>"$ERR" || rc=$?
   assert "exits 0" [ "$rc" -eq 0 ]
   assert "warns about the bad value" grep -q "invalid THRESHOLD 'banana'" "$ERR"
   assert "still alerts using default 20" grep -q 'MX Master 3: 5%' "$OSA_LOG"
@@ -150,7 +150,7 @@ test_invalid_threshold_falls_back_to_default() {
 test_threshold_from_config_respected() {
   printf 'THRESHOLD=4\n' > "$CONFIG"
   export BTBA_FIXTURE="$FIXTURES/low.txt"
-  bash "$REPO/check_bt_battery.sh" 2>/dev/null
+  bash "$REPO/check_bluetooth_battery.sh" 2>/dev/null
   assert "3% device alerts at threshold 4" grep -q 'Old Trackpad: 3%' "$OSA_LOG"
   assert "5% device does not alert at threshold 4" not_grep 'MX Master 3' "$OSA_LOG"
 }
@@ -158,7 +158,7 @@ test_threshold_from_config_respected() {
 test_warns_when_no_devices_seen() {
   export BTBA_FIXTURE="$FIXTURES/empty.txt"
   local rc=0
-  bash "$REPO/check_bt_battery.sh" 2>"$ERR" || rc=$?
+  bash "$REPO/check_bluetooth_battery.sh" 2>"$ERR" || rc=$?
   assert "exits 0" [ "$rc" -eq 0 ]
   assert "warns about possible format drift" \
     grep -q 'no battery-reporting devices found' "$ERR"
@@ -179,9 +179,9 @@ test_install_generates_valid_plist() {
   assert "runs Friday"    grep -q '"Weekday" => 5' "$TMPROOT/plist.txt"
   assert "at hour 16"     grep -q '"Hour" => 16'   "$TMPROOT/plist.txt"
   assert "at minute 30"   grep -q '"Minute" => 30' "$TMPROOT/plist.txt"
-  assert "logs under ~/Library/Logs" grep -q 'Library/Logs/btbatteryalert' "$TMPROOT/plist.txt"
+  assert "logs under ~/Library/Logs" grep -q 'Library/Logs/bluetooth-battery-alert' "$TMPROOT/plist.txt"
   assert "script installed and executable" \
-    [ -x "$HOME/Library/Application Support/btbatteryalert/check_bt_battery.sh" ]
+    [ -x "$HOME/Library/Application Support/bluetooth-battery-alert/check_bluetooth_battery.sh" ]
   assert "threshold written to config" grep -qx 'THRESHOLD=15' "$CONFIG"
   assert "agent bootstrapped" grep -q 'bootstrap gui/' "$LC_LOG"
   assert "test notification fired" grep -q 'notifications are working' "$OSA_LOG"
@@ -214,7 +214,7 @@ test_uninstall_keeps_config_by_default() {
   (cd "$REPO" && ./uninstall.sh) >/dev/null 2>&1
   assert "plist removed" file_absent "$PLIST"
   assert "installed script removed" \
-    file_absent "$HOME/Library/Application Support/btbatteryalert"
+    file_absent "$HOME/Library/Application Support/bluetooth-battery-alert"
   assert "agent booted out" grep -q 'bootout gui/' "$LC_LOG"
   assert "config kept" [ -f "$CONFIG" ]
 }
@@ -222,17 +222,17 @@ test_uninstall_keeps_config_by_default() {
 test_uninstall_purge_removes_config() {
   (cd "$REPO" && ./install.sh) >/dev/null 2>&1
   (cd "$REPO" && ./uninstall.sh --purge) >/dev/null 2>&1
-  assert "config removed" file_absent "$XDG_CONFIG_HOME/btbatteryalert"
+  assert "config removed" file_absent "$XDG_CONFIG_HOME/bluetooth-battery-alert"
 }
 
 # ---- run --------------------------------------------------------------------
 
 echo "== lint =="
-for f in check_bt_battery.sh install.sh uninstall.sh test.sh; do
+for f in check_bluetooth_battery.sh install.sh uninstall.sh test.sh; do
   assert "bash -n $f" bash -n "$REPO/$f"
 done
 if command -v shellcheck >/dev/null 2>&1; then
-  assert "shellcheck" shellcheck "$REPO/check_bt_battery.sh" "$REPO/install.sh" \
+  assert "shellcheck" shellcheck "$REPO/check_bluetooth_battery.sh" "$REPO/install.sh" \
     "$REPO/uninstall.sh" "$REPO/test.sh"
 else
   echo "shellcheck not installed - skipping (brew install shellcheck)"

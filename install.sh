@@ -25,10 +25,10 @@ is_int() { [[ "$1" =~ ^[0-9]+$ ]]; }
 [ "$(uname)" = "Darwin" ] || die "this tool is macOS-only (needs ioreg, osascript, launchd)"
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LABEL="com.btbatteryalert.check"
-APP_DIR="$HOME/Library/Application Support/btbatteryalert"
-SCRIPT_DEST="$APP_DIR/check_bt_battery.sh"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/btbatteryalert"
+LABEL="com.bluetooth-battery-alert.check"
+APP_DIR="$HOME/Library/Application Support/bluetooth-battery-alert"
+SCRIPT_DEST="$APP_DIR/check_bluetooth_battery.sh"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/bluetooth-battery-alert"
 CONFIG_FILE="$CONFIG_DIR/config"
 LOG_DIR="$HOME/Library/Logs"
 PLIST_DEST="$HOME/Library/LaunchAgents/$LABEL.plist"
@@ -88,11 +88,11 @@ done
 # Install the script to a stable, user-owned location so the agent never
 # executes files out of the (movable, possibly shared) repo clone.
 mkdir -p "$APP_DIR" "$CONFIG_DIR" "$LOG_DIR" "$HOME/Library/LaunchAgents"
-install -m 755 "$REPO_DIR/check_bt_battery.sh" "$SCRIPT_DEST"
+install -m 755 "$REPO_DIR/check_bluetooth_battery.sh" "$SCRIPT_DEST"
 
 if [ ! -f "$CONFIG_FILE" ]; then
   cat > "$CONFIG_FILE" <<'EOF'
-# btbatteryalert settings. One KEY=VALUE per line, no quotes, no trailing
+# bluetooth-battery-alert settings. One KEY=VALUE per line, no quotes, no trailing
 # comments. Read fresh on every scheduled run - edits apply immediately,
 # no reinstall needed.
 
@@ -131,8 +131,8 @@ for d in "${DAYS[@]}"; do
   "$PB" -c "Add :StartCalendarInterval:$i:Minute integer $MINUTE" "$PLIST_DEST"
   i=$((i + 1))
 done
-"$PB" -c "Add :StandardOutPath string $LOG_DIR/btbatteryalert.log" "$PLIST_DEST"
-"$PB" -c "Add :StandardErrorPath string $LOG_DIR/btbatteryalert.err" "$PLIST_DEST"
+"$PB" -c "Add :StandardOutPath string $LOG_DIR/bluetooth-battery-alert.log" "$PLIST_DEST"
+"$PB" -c "Add :StandardErrorPath string $LOG_DIR/bluetooth-battery-alert.err" "$PLIST_DEST"
 plutil -lint "$PLIST_DEST" >/dev/null
 
 launchctl bootout "gui/$(id -u)" "$PLIST_DEST" 2>/dev/null || true
@@ -146,7 +146,7 @@ echo "  Schedule:  $DAY_NAMES at $(printf '%02d:%02d' "$HOUR" "$MINUTE")"
 echo "  Threshold: below ${EFFECTIVE_THRESHOLD}%"
 echo "  Settings:  $CONFIG_FILE (edits apply on the next run, no reinstall)"
 echo "  Script:    $SCRIPT_DEST"
-echo "  Logs:      $LOG_DIR/btbatteryalert.log and .err"
+echo "  Logs:      $LOG_DIR/bluetooth-battery-alert.log and .err"
 echo
 echo "Sending a test notification now. If macOS asks to allow notifications"
 echo "(from Script Editor or osascript), click Allow - otherwise scheduled"

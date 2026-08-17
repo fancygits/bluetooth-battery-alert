@@ -1,4 +1,4 @@
-# bt-battery-alert
+# bluetooth-battery-alert
 
 Native macOS notification when a Bluetooth mouse or keyboard battery runs
 low, checked on a schedule (default: Monday-Thursday at 5pm, so you know to
@@ -10,7 +10,7 @@ third-party dependency.
 
 ## How it works
 
-`check_bt_battery.sh` runs:
+`check_bluetooth_battery.sh` runs:
 
 ```
 ioreg -c AppleDeviceManagementHIDEventService -r -l
@@ -26,7 +26,7 @@ arguments (never spliced into the AppleScript source), so an oddly or
 maliciously named device can't inject script.
 
 `install.sh` copies the script to
-`~/Library/Application Support/btbatteryalert/` and registers it as a
+`~/Library/Application Support/bluetooth-battery-alert/` and registers it as a
 `launchd` LaunchAgent, building the plist with `PlistBuddy`. Everything is
 per-user; no `sudo`, nothing outside your home directory.
 
@@ -44,7 +44,7 @@ per-user; no `sudo`, nothing outside your home directory.
 
 ```bash
 git clone <this-repo-url>
-cd bt-battery-alert
+cd bluetooth-battery-alert
 ./install.sh
 ```
 
@@ -67,7 +67,7 @@ scheduled alerts will be silently suppressed.
 
 ## Customize
 
-Settings live in `~/.config/btbatteryalert/config` and are read fresh on
+Settings live in `~/.config/bluetooth-battery-alert/config` and are read fresh on
 every run - edit and save, no reinstall needed:
 
 ```
@@ -83,12 +83,12 @@ config file: change it by re-running `./install.sh` with `--hour`,
 ## Test it immediately
 
 ```bash
-bash ~/Library/Application\ Support/btbatteryalert/check_bt_battery.sh
+bash ~/Library/Application\ Support/bluetooth-battery-alert/check_bluetooth_battery.sh
 ```
 
 Nothing happens if all devices are above threshold. To force a
 notification, temporarily set `THRESHOLD=99` in
-`~/.config/btbatteryalert/config`, run it again, then set it back.
+`~/.config/bluetooth-battery-alert/config`, run it again, then set it back.
 
 ## Uninstall
 
@@ -122,8 +122,8 @@ battery alerts](https://freddyreyes.com/blog/macos-bluetooth-battery-alert/).
 
 ## Troubleshooting
 
-Logs from scheduled runs land in `~/Library/Logs/btbatteryalert.log` and
-`~/Library/Logs/btbatteryalert.err`. A "no battery-reporting devices
+Logs from scheduled runs land in `~/Library/Logs/bluetooth-battery-alert.log` and
+`~/Library/Logs/bluetooth-battery-alert.err`. A "no battery-reporting devices
 found" warning in the `.err` log on every run (while a Bluetooth mouse or
 keyboard is connected) means `ioreg` no longer reports devices in the
 expected shape. Confirm with:
@@ -134,7 +134,7 @@ ioreg -c AppleDeviceManagementHIDEventService -r -l | grep -E 'Product|BatteryPe
 
 You should see each device's `Product` line immediately followed by its
 `BatteryPercent` line. If the format has changed, update the `awk` parsing
-in `check_bt_battery.sh` to match, then re-run `./install.sh`.
+in `check_bluetooth_battery.sh` to match, then re-run `./install.sh`.
 
 If no notification ever appears even with a low threshold, check
 System Settings > Notifications and make sure notifications are allowed

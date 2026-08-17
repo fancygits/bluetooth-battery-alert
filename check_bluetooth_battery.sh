@@ -1,5 +1,5 @@
 #!/bin/bash
-# check_bt_battery.sh - notify if a connected Bluetooth accessory (mouse,
+# check_bluetooth_battery.sh - notify if a connected Bluetooth accessory (mouse,
 # keyboard, etc.) battery is below THRESHOLD.
 #
 # Detection method: `ioreg -c AppleDeviceManagementHIDEventService -r -l`
@@ -8,7 +8,7 @@
 # built-in keyboard/trackpad) have no BatteryPercent line and are skipped
 # automatically - no filtering needed.
 #
-# Settings come from ~/.config/btbatteryalert/config (KEY=VALUE lines);
+# Settings come from ~/.config/bluetooth-battery-alert/config (KEY=VALUE lines);
 # the defaults below apply when the file or a key is missing. The config
 # is parsed, so a config line can never execute code.
 #
@@ -20,7 +20,7 @@ THRESHOLD=20   # percent (1-99)
 SOUND=Glass    # notification sound name
 IGNORE=""      # comma-separated device names to skip
 
-CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/btbatteryalert/config"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/bluetooth-battery-alert/config"
 
 warn() { printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >&2; }
 
