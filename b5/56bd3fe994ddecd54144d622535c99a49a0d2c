@@ -1,0 +1,20 @@
+README.md
+  h_c85ef4eac37ecb 4-5,27,34,47,63
+check_bt_battery.sh
+  h_c85ef4eac37ecb 2,9,15
+install.sh
+  h_c85ef4eac37ecb 2
+uninstall.sh
+  h_c85ef4eac37ecb 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "b556bd3fe994ddecd54144d622535c99a49a0d2c",
+  "prompts": {},
+  "humans": {
+    "h_c85ef4eac37ecb": {
+      "author": "Luke Johnson <ljohnson@splashfinancial.com>"
+    }
+  }
+}
