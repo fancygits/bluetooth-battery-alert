@@ -97,6 +97,24 @@ notification, temporarily set `THRESHOLD=99` in
 ./uninstall.sh --purge  # also removes your settings
 ```
 
+## Development
+
+```bash
+./test.sh
+```
+
+Runs an offline test suite: `ioreg`, `osascript`, and `launchctl` are
+stubbed on `PATH` and everything runs against fixture data in a throwaway
+`HOME`, so it needs no Bluetooth hardware, sends no real notifications,
+and never touches your actual launchd agents or settings. It also lints
+all scripts with `bash -n` and `shellcheck` (install via
+`brew install shellcheck`; skipped with a note if absent). The same suite
+runs in GitHub Actions on every push (`.github/workflows/ci.yml`).
+
+Note the tests pin today's `ioreg` output shape via fixtures - they catch
+regressions in this project's own logic, not changes Apple makes to
+`ioreg` in a future macOS release.
+
 ## Credits
 
 This project was inspired by [Freddy Reyes' blog post on macOS Bluetooth

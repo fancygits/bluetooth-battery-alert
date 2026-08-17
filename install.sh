@@ -76,6 +76,7 @@ day_name() {
   esac
 }
 
+[ -n "$DAYS_RAW" ] || die "--days must list at least one day"
 DAYS=()
 IFS=',' read -ra day_parts <<< "$DAYS_RAW"
 for p in "${day_parts[@]}"; do
